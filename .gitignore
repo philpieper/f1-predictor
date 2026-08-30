@@ -14,3 +14,6 @@ data/cache/
 data/processed/
 .DS_Store
 .claude/worktrees
+
+# Skill eval/benchmark output
+log-decisions-workspace/
