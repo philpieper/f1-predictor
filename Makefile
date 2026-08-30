@@ -1,5 +1,7 @@
-binary_classification:
-	uv run python -m f1_predictor.binary_classification
+simple_top10_binary_classification:
+	uv run python -m f1_predictor.simple_top10_binary_classification
+last3_quali_binary_classification:
+	uv run python -m f1_predictor.last3_quali_binary_classification
 data_loader:
 	uv run python -m f1_predictor.data_loader
 features:

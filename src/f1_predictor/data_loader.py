@@ -218,4 +218,4 @@ def build_raw_dataset(seasons: list[int], force_refetch: bool = False) -> pd.Dat
 
 if __name__ == "__main__":
     # Start small: two recent seasons. Widen once the pipeline works end to end.
-    build_raw_dataset(seasons=[2025, 2026])
+    build_raw_dataset(seasons=[2022, 2023, 2024, 2025, 2026])
