@@ -19,16 +19,26 @@ def _score(y_true: pd.Series, y_prob) -> dict:
     }
 
 
-def _report_cv(name: str, fold_scores: list[dict]) -> None:
+def _report_cv(name: str, fold_scores: list[dict]) -> dict:
     scores = pd.DataFrame(fold_scores)
     mean, std = scores.mean(), scores.std()
+    summary = {
+        "accuracy_mean": mean["accuracy"],
+        "accuracy_std": std["accuracy"],
+        "roc_auc_mean": mean["roc_auc"],
+        "roc_auc_std": std["roc_auc"],
+        "log_loss_mean": mean["log_loss"],
+        "log_loss_std": std["log_loss"],
+        "n_folds": len(scores),
+    }
     print(
         f"{name:<20} "
-        f"accuracy={mean['accuracy']:.3f}±{std['accuracy']:.3f}  "
-        f"roc_auc={mean['roc_auc']:.3f}±{std['roc_auc']:.3f}  "
-        f"log_loss={mean['log_loss']:.3f}±{std['log_loss']:.3f}  "
-        f"(n={len(scores)} folds)"
+        f"accuracy={summary['accuracy_mean']:.3f}±{summary['accuracy_std']:.3f}  "
+        f"roc_auc={summary['roc_auc_mean']:.3f}±{summary['roc_auc_std']:.3f}  "
+        f"log_loss={summary['log_loss_mean']:.3f}±{summary['log_loss_std']:.3f}  "
+        f"(n={summary['n_folds']} folds)"
     )
+    return summary
 
 
 def run_binary_classification(n_splits: int = 5):
@@ -74,10 +84,12 @@ def run_binary_classification(n_splits: int = 5):
         gbm.fit(X_train, y_train)
         gbm_scores.append(_score(y_test, gbm.predict_proba(X_test)[:, 1]))
 
-    _report_cv("LogisticRegression", logreg_scores)
-    _report_cv("LightGBM", gbm_scores)
+    summaries = {
+        "LogisticRegression": _report_cv("LogisticRegression", logreg_scores),
+        "LightGBM": _report_cv("LightGBM", gbm_scores),
+    }
 
-    return logreg  # fitted on the final (largest) fold's training data
+    return logreg, summaries  # logreg fitted on the final (largest) fold's training data
 
 
 if __name__ == "__main__":

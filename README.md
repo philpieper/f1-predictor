@@ -45,7 +45,25 @@ make data_loader                          # fetch + cache raw race/quali results
 make features                             # build the feature table
 make simple_top10_binary_classification    # train/evaluate the rolling-features model
 make last3_quali_binary_classification     # train/evaluate the last-3-races model
+make pipeline                             # run everything above end-to-end and update the table below
 ```
+
+`make pipeline` ([compare_pipeline.py](src/f1_predictor/compare_pipeline.py)) runs `uv sync`,
+pulls any new data, rebuilds features, trains/evaluates both models, and
+rewrites the comparison table below in place.
+
+## Model comparison
+
+<!-- MODEL_COMPARISON_START -->
+*Last generated 2026-08-30 09:26 UTC by `make pipeline`.*
+
+| Feature set | Model | Accuracy | ROC AUC | Log Loss | Folds |
+|---|---|---|---|---|---|
+| Rolling form (simple_top10) | LogisticRegression | 0.810 ± 0.014 | 0.874 ± 0.012 | 0.449 ± 0.023 | 5 |
+| Rolling form (simple_top10) | LightGBM | 0.797 ± 0.011 | 0.857 ± 0.013 | 0.474 ± 0.021 | 5 |
+| Last-3 races + quali (last3_quali) | LogisticRegression | 0.807 ± 0.013 | 0.870 ± 0.020 | 0.452 ± 0.031 | 5 |
+| Last-3 races + quali (last3_quali) | LightGBM | 0.817 ± 0.021 | 0.856 ± 0.029 | 0.468 ± 0.048 | 5 |
+<!-- MODEL_COMPARISON_END -->
 
 ## Project structure
 
