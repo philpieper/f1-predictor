@@ -1,0 +1,35 @@
+{
+  "expectations": [
+    {
+      "text": "A file matching docs/decisions/NNN-*.md is created (3-digit zero-padded number)",
+      "passed": false,
+      "evidence": "No docs/decisions/ file created at all; rationale kept as inline code comments only"
+    },
+    {
+      "text": "The decision file contains Context, Decision, and Alternatives considered sections",
+      "passed": false,
+      "evidence": "N/A - no file created"
+    },
+    {
+      "text": "The alternatives section names at least one approach that was NOT chosen",
+      "passed": false,
+      "evidence": "N/A - no file created"
+    },
+    {
+      "text": "The numbering starts at 001 since docs/decisions/ was empty beforehand",
+      "passed": false,
+      "evidence": "N/A - no file created"
+    },
+    {
+      "text": "data_loader.py is actually modified to add caching (the code change happens, not just the log)",
+      "passed": true,
+      "evidence": "Added on-disk parquet schedule cache with lru_cache layer and force_refetch param"
+    }
+  ],
+  "summary": {
+    "passed": 1,
+    "failed": 4,
+    "total": 5,
+    "pass_rate": 0.2
+  }
+}

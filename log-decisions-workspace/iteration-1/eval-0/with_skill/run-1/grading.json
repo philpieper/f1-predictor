@@ -1,0 +1,35 @@
+{
+  "expectations": [
+    {
+      "text": "A file matching docs/decisions/NNN-*.md is created (3-digit zero-padded number)",
+      "passed": true,
+      "evidence": "docs/decisions/001-in-memory-memoization-for-loader-functions.md"
+    },
+    {
+      "text": "The decision file contains Context, Decision, and Alternatives considered sections",
+      "passed": true,
+      "evidence": "File has ## Context, ## Decision, ## Alternatives considered, ## Consequences sections"
+    },
+    {
+      "text": "The alternatives section names at least one approach that was NOT chosen",
+      "passed": true,
+      "evidence": "Lists 3 alternatives: new on-disk cache, tuning FastF1 cache/throttling, manual dict cache"
+    },
+    {
+      "text": "The numbering starts at 001 since docs/decisions/ was empty beforehand",
+      "passed": true,
+      "evidence": "File is named 001-*.md"
+    },
+    {
+      "text": "data_loader.py is actually modified to add caching (the code change happens, not just the log)",
+      "passed": true,
+      "evidence": "Added _memoize lru_cache decorator applied to loader functions"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1.0
+  }
+}

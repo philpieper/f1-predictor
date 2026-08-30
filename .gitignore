@@ -13,3 +13,4 @@ wheels/
 data/cache/
 data/processed/
 .DS_Store
+.claude/worktrees

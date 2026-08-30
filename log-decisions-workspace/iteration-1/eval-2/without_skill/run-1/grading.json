@@ -1,0 +1,20 @@
+{
+  "expectations": [
+    {
+      "text": "No new file is created under docs/decisions/ (this is a negative case - mechanical rename, no real tradeoff)",
+      "passed": true,
+      "evidence": "No decisions file created (expected regardless, since there's no skill prompting it)"
+    },
+    {
+      "text": "The rename itself is still completed correctly in data_loader.py",
+      "passed": true,
+      "evidence": "All bare df references renamed, verified with grep"
+    }
+  ],
+  "summary": {
+    "passed": 2,
+    "failed": 0,
+    "total": 2,
+    "pass_rate": 1.0
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "skill_name": "log-decisions",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I need to add a caching layer for the fastf1 API calls in src/f1_predictor/data_loader.py since we're hitting rate limits during model training. Pick a reasonable caching approach (in-memory dict vs on-disk cache vs something else) and implement it.",
+      "expected_output": "Claude implements a caching approach in data_loader.py AND creates docs/decisions/001-<something>.md documenting the choice (e.g. disk-based cache) and the alternatives it passed over (e.g. plain in-memory dict), with Context/Decision/Alternatives sections.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "For the binary_classification.py model, should we use LightGBM's built-in class_weight balancing or manually oversample the minority class? Decide which one to use, implement it, and log the decision so we remember why later.",
+      "expected_output": "Claude picks one approach, implements it in binary_classification.py, and writes docs/decisions/001-<something>.md (or 002- if a prior decision file exists) recording the choice and alternatives, since the user explicitly asked to log the decision.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "Rename the variable `df` to `race_results_df` throughout data_loader.py for clarity.",
+      "expected_output": "Claude just does the rename — this is a mechanical, low-stakes change with no real alternative considered, so no decision file should be created. Used as a negative case to check the skill doesn't over-trigger.",
+      "files": []
+    }
+  ]
+}

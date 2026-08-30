@@ -1,0 +1,9 @@
+{
+  "eval_id": 3,
+  "eval_name": "mechanical-rename-negative",
+  "prompt": "Rename the variable `df` to `race_results_df` throughout data_loader.py for clarity.",
+  "assertions": [
+    "No new file is created under docs/decisions/ (this is a negative case — mechanical rename, no real tradeoff)",
+    "The rename itself is still completed correctly in data_loader.py"
+  ]
+}
