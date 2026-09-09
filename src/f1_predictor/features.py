@@ -16,8 +16,32 @@ from f1_predictor.data_loader import PROCESSED_DIR
 ROLLING_WINDOW = 5
 
 
-def _dnf_rate(classified: pd.Series) -> pd.Series:
-    return 1 - classified.astype(float)
+# FastF1 status strings for a driver who was classified as finishing the
+# race: "Finished" (lead lap), "Lapped", or "+N Lap(s)". Anything else --
+# Retired, Accident, Collision, a mechanical failure, Did not start,
+# Disqualified -- is not a classified finish and cannot score points.
+_FINISHED_STATUS_PATTERN = r"Finished|Lapped|\+\d+\s*Laps?"
+
+
+def finished_race(status: pd.Series) -> pd.Series:
+    """True when the driver was classified as finishing the race.
+
+    Deliberately does NOT use data_loader's `classified` column: that one
+    matches only statuses containing "Finished" or "+", so every "Lapped"
+    row (384 of them, 18% of the dataset) reads as a DNF. Being lapped is a
+    normal points-paying finish -- 2024 R8 TSU finished P8 with status
+    "Lapped" and 4.0 points -- so `classified` both zeroed target_top10 for
+    55 drivers who actually scored and pushed driver_dnf_rate_last5 to a
+    ~33% base rate against a true ~15%.
+
+    Cross-check: on the current dataset this predicate combined with
+    finish_position <= 10 reproduces `points > 0` on all 2102 rows exactly.
+    """
+    return status.str.strip().str.fullmatch(_FINISHED_STATUS_PATTERN, case=False, na=False)
+
+
+def _dnf_rate(finished: pd.Series) -> pd.Series:
+    return 1 - finished.astype(float)
 
 
 def load_raw() -> pd.DataFrame:
@@ -27,10 +51,15 @@ def load_raw() -> pd.DataFrame:
 
 
 def add_target(df: pd.DataFrame) -> pd.DataFrame:
-    """Binary target: did the driver finish in the points (top 10)?"""
+    """Binary target: did the driver finish in the points (top 10)?
+
+    Also materialises `finished_race` (see that function) so the flag the
+    target is built from is inspectable in features.parquet.
+    """
     df = df.copy()
+    df["finished_race"] = finished_race(df["status"])
     df["target_top10"] = (
-        df["classified"] & (df["finish_position"] <= 10)
+        df["finished_race"] & (df["finish_position"] <= 10)
     ).astype(int)
     return df
 
@@ -40,6 +69,10 @@ def add_rolling_driver_features(df: pd.DataFrame) -> pd.DataFrame:
 
     Sorting by (season, round) and using shift(1) before the rolling window
     means row N's features only see rows 1..N-1 for that driver.
+
+    "DNF" here means "no classified finish", derived from `status` via
+    finished_race -- not data_loader's `classified` column, which counts
+    lapped finishers as DNFs.
     """
     df = df.copy()
     df = df.sort_values(["driver", "season", "round"])
@@ -49,8 +82,11 @@ def add_rolling_driver_features(df: pd.DataFrame) -> pd.DataFrame:
     df["driver_avg_finish_last5"] = g["finish_position"].apply(
         lambda s: s.shift(1).rolling(ROLLING_WINDOW, min_periods=1).mean()
     )
-    df["driver_dnf_rate_last5"] = g["classified"].apply(
-        lambda s: _dnf_rate(s).shift(1).rolling(ROLLING_WINDOW, min_periods=1).mean()
+    df["driver_dnf_rate_last5"] = g["status"].apply(
+        lambda s: _dnf_rate(finished_race(s))
+        .shift(1)
+        .rolling(ROLLING_WINDOW, min_periods=1)
+        .mean()
     )
     df["driver_avg_quali_pos_last5"] = g["quali_position"].apply(
         lambda s: s.shift(1).rolling(ROLLING_WINDOW, min_periods=1).mean()
@@ -112,12 +148,54 @@ def add_rolling_constructor_features(df: pd.DataFrame) -> pd.DataFrame:
     return df.sort_values(["season", "round", "driver"]).reset_index(drop=True)
 
 
+def add_track_history_features(df: pd.DataFrame) -> pd.DataFrame:
+    """Driver's historical average finish position at this exact circuit.
+
+    A driver typically races a given circuit once per season, so a fixed
+    rolling window (as used for rolling driver form) would be too sparse --
+    this uses an expanding mean over all prior visits instead. shift(1)
+    keeps the current race's own result out of its own feature.
+    """
+    df = df.copy()
+    df = df.sort_values(["driver", "circuit", "season", "round"])
+
+    g = df.groupby(["driver", "circuit"], group_keys=False)
+    df["driver_avg_finish_at_circuit"] = g["finish_position"].apply(
+        lambda s: s.shift(1).expanding().mean()
+    )
+
+    return df.sort_values(["season", "round", "driver"]).reset_index(drop=True)
+
+
+def add_championship_standing_features(df: pd.DataFrame) -> pd.DataFrame:
+    """Driver's championship position (rank by cumulative points) entering this race.
+
+    Points are shifted by 1 within each driver-season before the cumulative
+    sum, so a race's own points can never leak into its own feature -- round
+    1 of a season has everyone on 0 points before ranking (tied for P1).
+    """
+    df = df.copy()
+    df = df.sort_values(["driver", "season", "round"])
+
+    g = df.groupby(["driver", "season"], group_keys=False)
+    df["points_before_race"] = g["points"].apply(lambda s: s.shift(1).cumsum()).fillna(0)
+
+    df = df.sort_values(["season", "round", "driver"]).reset_index(drop=True)
+    df["championship_position"] = df.groupby(["season", "round"])["points_before_race"].rank(
+        method="min", ascending=False
+    )
+
+    return df
+
+
 def build_feature_table() -> pd.DataFrame:
     df = load_raw()
     df = add_target(df)
     df = add_rolling_driver_features(df)
     df = add_rolling_constructor_features(df)
     df = add_last3_finish_features(df)
+    df = add_track_history_features(df)
+    df = add_championship_standing_features(df)
 
     out_path = PROCESSED_DIR / "features.parquet"
     df.to_parquet(out_path, index=False)

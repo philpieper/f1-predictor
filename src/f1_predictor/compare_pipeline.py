@@ -11,6 +11,12 @@ from f1_predictor.last3_quali_binary_classification import (
     run_last3_quali_binary_classification,
 )
 from f1_predictor.simple_top10_binary_classification import run_binary_classification
+from f1_predictor.trained_weights_weighted_ensemble_binary_classification import (
+    run_trained_weights_weighted_ensemble_binary_classification,
+)
+from f1_predictor.weighted_ensemble_binary_classification import (
+    run_weighted_ensemble_binary_classification,
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 README_PATH = REPO_ROOT / "README.md"
@@ -44,9 +50,17 @@ def run_predictions() -> dict:
     print("== Predictions: last3_quali (last-3-race lag) ==")
     _, last3_scores = run_last3_quali_binary_classification()
 
+    print("== Predictions: weighted_ensemble (standings + last3_quali + track, 25/50/25) ==")
+    weighted_scores = run_weighted_ensemble_binary_classification()
+
+    print("== Predictions: trained_weights_weighted_ensemble (learned blend weights) ==")
+    trained_weights_scores = run_trained_weights_weighted_ensemble_binary_classification()
+
     return {
         "Rolling form (simple_top10)": simple_scores,
         "Last-3 races + quali (last3_quali)": last3_scores,
+        "Standings + last3_quali + track, weighted 25/50/25 (weighted_ensemble)": weighted_scores,
+        "Standings + last3_quali + track, learned weights (trained_weights_weighted_ensemble)": trained_weights_scores,
     }
 
 
